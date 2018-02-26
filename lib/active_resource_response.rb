@@ -27,6 +27,7 @@ require "active_resource_response/http_response"
 require "active_resource_response/connection"
 require "active_resource_response/response_method"
 require "active_resource_response/custom_methods"
+
 ActiveResource::Connection.send :include, ActiveResourceResponse::Connection
 ActiveResource::Base.send :include, ActiveResourceResponse::ResponseMethod
 ActiveResource::Base.send :include, ActiveResourceResponse::CustomMethods

@@ -17,6 +17,8 @@ Gem::Specification.new do |s|
   s.add_dependency "jruby-openssl" if RUBY_PLATFORM == "java"
   s.add_development_dependency "minitest" , '~> 5.3'
   s.add_development_dependency 'rake', '~> 10'
+  
+  s.add_development_dependency 'byebug'
 
   s.extra_rdoc_files = %w( README.rdoc )
   s.rdoc_options.concat ['--main', 'README.rdoc']

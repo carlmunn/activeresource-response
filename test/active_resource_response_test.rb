@@ -1,57 +1,40 @@
-#--
-# Copyright (c) 2012 Igor Fedoronchuk
-#
-# Permission is hereby granted, free of charge, to any person obtaining
-# a copy of this software and associated documentation files (the
-# "Software"), to deal in the Software without restriction, including
-# without limitation the rights to use, copy, modify, merge, publish,
-# distribute, sublicense, and/or sell copies of the Software, and to
-# permit persons to whom the Software is furnished to do so, subject to
-# the following conditions:
-#
-# The above copyright notice and this permission notice shall be
-# included in all copies or substantial portions of the Software.
-#
-# THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND,
-# EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF
-# MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND
-# NONINFRINGEMENT. IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE
-# LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION
-# OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION
-# WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
-#++
 require_relative 'test_helper'
 
 class ActiveResourceResponseTest < MiniTest::Test
 
-
   def setup
+
     @country = {:country => {:id => 1, :name => "Ukraine", :iso=>"UA"}}
-    @country_create_error = {:errors => {:base => ["country exists"]}}
-    @city = {:city => {:id => 1, :name => "Odessa", :population => 2500000}}
-    @region = {:region => {:id => 1, :name => "Odessa region", :population => 4500000}}
-    @street = {:street => {:id => 1, :name => "Deribasovskaya", :population => 2300}}
+    @city    = {:city => {:id => 1, :name => "Odessa", :population => 2500000}}
+    @region  = {:region => {:id => 1, :name => "Odessa region", :population => 4500000}}
+    @street  = {:street => {:id => 1, :name => "Deribasovskaya", :population => 2300}}
     
+    @country_create_error = {:errors => {:base => ["country exists"]}}
+
+    # Quick response generator
+    _response = ->(uri, records, others={}, status: 200){
+      [uri, {}, records.to_json, status, {"X-total" => "1"}.merge!(others)]
+    }
+
     ActiveResource::HttpMock.respond_to do |mock|
-      mock.get "/countries.json", {}, [@country].to_json, 200, {"X-total"=>'1'}
-      mock.get "/regions.json", {}, [@region].to_json, 200, {"X-total"=>'1'}
-      mock.get "/regions/1.json", {}, @region.to_json, 200, {"X-total"=>'1'}
-      mock.get "/regions/population.json", {}, {:count => 45000000}.to_json, 200, {"X-total"=>'1'}
-      mock.get "/regions/cities.json", {}, [@city].to_json, 200, {"X-total"=>'2'}
-      mock.get "/countries/1.json", {}, @country.to_json, 200, {"X-total"=>'1', 'Set-Cookie'=>['path=/; expires=Tue, 20-Jan-2015 15:03:14 GMT, foo=bar, bar=foo']}
-      mock.get "/countries/1/population.json", {}, {:count => 45000000}.to_json, 200, {"X-total"=>'1'}
-      mock.post "/countries.json", {}, @country_create_error.to_json, 422, {"X-total"=>'1'}
-      mock.get "/countries/1/cities.json", {}, [@city].to_json, 200, {"X-total"=>'1'}
-      mock.get "/regions/1/cities.json", {}, [@city].to_json, 200, {"X-total"=>'1'}
-      mock.get "/cities/1/population.json", {}, {:count => 2500000}.to_json, 200, {"X-total"=>'1'}
-      mock.get "/cities/1.json", {}, @city.to_json, 200, {"X-total"=>'1'}
-      mock.get "/cities.json", {}, [@city].to_json, 200, {"X-total"=>'1'}
-      mock.get "/streets.json", {}, [@street].to_json, 200, {"X-total"=>'1'}
-      mock.get "/streets/1/city.json", {}, @city.to_json, 200, {"X-total"=>'1'}
-      mock.get "/streets/1.json", {}, @street.to_json, 200, {"X-total"=>'1'}
+      mock.get(*_response["/countries.json", [@country]])
+      mock.get(*_response["/regions.json", [@region]])
+      mock.get(*_response["/regions/1.json", @region])
+      mock.get(*_response["/regions/population.json", {:count => 45000000}])
+      mock.get(*_response["/regions/cities.json", [@city], {"X-total"=>'2'}])
+      mock.get(*_response["/countries/1.json", @country, {'Set-Cookie'=>["foo=bar;bar=foo;path=/"]}])
+      mock.get(*_response["/countries/1/population.json", {:count => 45000000}])
+      mock.get(*_response["/countries/1/cities.json", [@city]])
+      mock.get(*_response["/regions/1/cities.json", [@city]])
+      mock.get(*_response["/cities/1/population.json", {:count => 2500000}])
+      mock.get(*_response["/cities/1.json", @city])
+      mock.get(*_response["/cities.json", [@city]])
+      mock.get(*_response["/streets.json", [@street]])
+      mock.get(*_response["/streets/1/city.json", @city])
+      mock.get(*_response["/streets/1.json", @street])
+      mock.post(*_response["/countries.json", @country_create_error, status: 422])
     end
   end
-
 
   def test_methods_appeared
     countries = Country.all
@@ -70,41 +53,40 @@ class ActiveResourceResponseTest < MiniTest::Test
     assert_equal countries.http.headers[:x_total].first.to_i, 1
   end
 
-
   def test_headers_from_custom
     cities = Region.get("cities")
     assert cities.respond_to?(:http_response)
     assert_equal cities.http_response.headers[:x_total].first.to_i, 2
     assert_equal cities.http_response['X-total'].to_i, 2
-    count = Country.find(1).get("population")
+    country_population = Country.find(1).get("population")
 
     #immutable objects doing good
     some_numeric = 45000000
-    assert_equal count, some_numeric
-    assert count.respond_to?(:http)
+
+    assert_equal country_population["count"], some_numeric
+    assert country_population.respond_to?(:http)
     assert !some_numeric.respond_to?(:http)
 
     assert_equal Country.connection.http_response.headers[:x_total].first.to_i, 1
     assert_equal Country.http_response.headers[:x_total].first.to_i, 1
     assert_equal Country.http_response['X-total'].to_i, 1
+    
     cities = Country.find(1).get("cities")
     assert cities.respond_to?(:http), "Cities should respond to http"
     assert_equal cities.http.headers[:x_total].first.to_i, 1, "Cities total value should be 1"
+    
     regions_population = Region.get("population")
-    assert_equal regions_population.to_i, 45000000
+    assert_equal regions_population['count'], 45000000
     cities = Region.find(1).get("cities")
     assert cities.respond_to?(:http_response)
     assert_equal cities.http_response.headers[:x_total], ['1']
-
   end
-
 
   def test_methods_without_http
     cities = City.all
     assert_kind_of City, cities.first
-    count = cities.first.get("population")
-    assert_equal count.to_i, 2500000
-
+    country_population = Country.find(1).get("population")
+    assert_equal 45000000, country_population["count"].to_i
   end
 
   def test_get_headers_from_find
@@ -114,12 +96,10 @@ class ActiveResourceResponseTest < MiniTest::Test
 
   def test_get_cookies
     country = Country.find(1)
-    assert_equal country.http.cookies['foo'], 'bar'
-    assert_equal country.http.cookies['bar'], 'foo'
-    #from class
-    assert_equal Country.http_response.cookies['foo'], 'bar'
-    assert_equal Country.http_response.cookies['bar'], 'foo'
-
+    assert_equal 'bar', country.http.cookies['foo']
+    assert_equal 'foo', country.http.cookies['bar']
+    assert_equal 'bar', Country.http_response.cookies['foo']
+    assert_equal 'foo', Country.http_response.cookies['bar']
   end
 
   def test_headers_after_exception
@@ -146,5 +126,4 @@ class ActiveResourceResponseTest < MiniTest::Test
       street = Country.find(1)
       assert street.class.respond_to?(:model_name)
   end
-
 end

@@ -13,3 +13,4 @@ require "fixtures/city"
 require "fixtures/region"
 require "fixtures/street"
 require "active_resource_response/http_mock"
+require "byebug" if ENV['DEBUG']

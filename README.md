@@ -1,10 +1,8 @@
-## Activeresource-response 
-####This gem adds possibility to access http response (Net::HTTPResponse) object from result (single object or collection) of activeresource call (methods : find, all, first, last, get )
+## activeresource-response
 
-[![Build Status](http://img.shields.io/travis/Fivell/activeresource-response.png)](https://travis-ci.org/Fivell/activeresource-response)
-[![Dependency Status](http://img.shields.io/gemnasium/Fivell/activeresource-response.svg)](https://gemnasium.com/Fivell/activeresource-response)
-[![Coverage Status](http://img.shields.io/coveralls/Fivell/activeresource-response.svg)](https://coveralls.io/r/Fivell/activeresource-response)
+Own forked version from Fivell. Noticed 404 wasn't being handled which was created an exception because nil was attempted to be modified
 
+This gem adds possibility to access http response (Net::HTTPResponse) object from result (single object or collection) of activeresource call (methods : find, all, first, last, get )
 
 #### Why It can be used?
 Such functionallity can be used for easily implementing pagination in a REST API so that an ActiveResource client can navigate paginated results.
@@ -164,8 +162,3 @@ Add this line to your test to patch http_mock
   Commit your changes (git commit -am 'Add some feature')
   Push to the branch (git push origin my-new-feature)
   Create new Pull Request
-
-
-#### Please, feel free to contact me if you have any questions
-fedoronchuk(at)gmail.com
-
