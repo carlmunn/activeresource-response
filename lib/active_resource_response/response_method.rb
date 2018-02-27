@@ -21,6 +21,7 @@
 # WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 #++
 require 'delegate'
+
 module ActiveResourceResponse
 
   module ResponseMethod
@@ -35,9 +36,11 @@ module ActiveResourceResponse
         connection.http_response
       end
 
-      def add_response_method(method_name = :http_response)
+      def add_response_method(method_name=:http_response)
         class_attribute :http_response_method
+        
         self.http_response_method = method_name
+        
         class << self
           alias :find_without_http_response :find
 
@@ -61,9 +64,11 @@ module ActiveResourceResponse
       def wrap_result(result)
         result = SimpleDelegator.new(result) unless result.duplicable?
         result.instance_variable_set(:@http_response, connection.http_response)
+
         result.singleton_class.send(:define_method, self.http_response_method) do
           @http_response
         end
+        
         result
       end
     end

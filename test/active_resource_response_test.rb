@@ -33,6 +33,8 @@ class ActiveResourceResponseTest < MiniTest::Test
       mock.get(*_response["/streets/1/city.json", @city])
       mock.get(*_response["/streets/1.json", @street])
       mock.post(*_response["/countries.json", @country_create_error, status: 422])
+
+      mock.get(*_response["/countries/404.json", nil, status: 404])
     end
   end
 
@@ -125,5 +127,11 @@ class ActiveResourceResponseTest < MiniTest::Test
   def test_model_naming_methods
       street = Country.find(1)
       assert street.class.respond_to?(:model_name)
+  end
+
+  def test_not_found
+    assert_raises do
+      Country.find(404)
+    end
   end
 end

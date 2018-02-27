@@ -28,6 +28,7 @@ module ActiveResourceResponse
     #to avoid methods conflict with Net:HttpResponse and ActiveResource::Response (HttpMock)
       def self.included(base)
         base.class_eval do
+          
           def to_hash
             Hash[@headers.map{|k, value| [k, Array.wrap(value)] } ]
           end

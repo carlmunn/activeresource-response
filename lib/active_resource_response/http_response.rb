@@ -43,12 +43,11 @@ module ActiveResourceResponse
     end
 
     private
-    def symbolize_keys(hash)
-      hash.inject({}) do |out, (key, value)|
-        out[key.gsub(/-/, '_').downcase.to_sym] = value
-        out
+      def symbolize_keys(hash)
+        hash.inject({}) do |out, (key, value)|
+          out[key.gsub(/-/, '_').downcase.to_sym] = value
+          out
+        end
       end
-    end
-
   end
 end
