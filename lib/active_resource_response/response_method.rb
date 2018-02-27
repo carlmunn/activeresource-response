@@ -46,7 +46,7 @@ module ActiveResourceResponse
 
           def find(*arguments)
             result = find_without_http_response(*arguments)
-            self.wrap_result(result)
+            self.wrap_result(result || [])
           end
         end unless methods.map(&:to_sym).include?(:find_without_http_response)
       end
