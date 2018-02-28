@@ -1,8 +1,10 @@
 ## activeresource-response
+### Addition to activeresource gem for HTTP header reading and request caching
 
-Own forked version from Fivell. Noticed 404 wasn't being handled which was created an exception because nil was attempted to be modified
+Own forked version from Fivell. Noticed 404 wasn't being handled properly which caused an exception
 
-This gem adds possibility to access http response (Net::HTTPResponse) object from result (single object or collection) of activeresource call (methods : find, all, first, last, get )
+This gem adds possibility to access http response (Net::HTTPResponse) object from result (single object or collection)
+of activeresource call (methods : find, all, first, last, get )
 
 #### Why It can be used?
 Such functionallity can be used for easily implementing pagination in a REST API so that an ActiveResource client can navigate paginated results.
@@ -34,6 +36,21 @@ You can remove method from ActiveResource subclass
 class Order < ActiveResource::Base
   remove_response_method  
 end
+```
+
+
+**Caching** can be applied to paths; query parameters are ignored. Options are:
+`regex` this will trigger the cache, and optional `expires_on`. There can
+be multiple entries. There is debugging, look out for "[D]"
+
+I applied caching within *activeresource-response* because Rails.cache was giving
+me problems. You can't *Marshal.dump* objects with singleton methods which this gem does. This caches the raw JSON now
+
+```ruby
+  add_response_method :http_response, cache: [
+    {regex: /\/path\.json$/, expires_in: 6.hours}
+  ]
+
 ```
 
 ## Full example of usage with kaminari gem

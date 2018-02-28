@@ -23,9 +23,9 @@
 
 module ActiveResourceResponse
   module Lint
-     def to_key
-        return nil unless persisted?
-        super
-     end 
+    def to_key
+      return nil unless persisted?
+      super
+    end 
   end
 end

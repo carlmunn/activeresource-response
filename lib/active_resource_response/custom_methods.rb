@@ -22,7 +22,9 @@
 #++
 module ActiveResourceResponse
   module CustomMethods
+
     extend ActiveSupport::Concern
+
     included do
       class << self
 
@@ -30,9 +32,11 @@ module ActiveResourceResponse
 
         def get(custom_method_name, options = {})
           result = self.origin_get(custom_method_name, options)
+
           if self.respond_to? :http_response_method
             result = self.wrap_result(result)
           end
+          
           result
         end
       end
@@ -45,8 +49,6 @@ module ActiveResourceResponse
       end
       result
     end
-
-
   end
 end  
     

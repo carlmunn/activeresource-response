@@ -24,6 +24,8 @@ require 'delegate'
 
 module ActiveResourceResponse
 
+  mattr_accessor :http_response_caching
+
   module ResponseMethod
 
     def self.included(base)
@@ -36,12 +38,16 @@ module ActiveResourceResponse
         connection.http_response
       end
 
-      def add_response_method(method_name=:http_response)
+      def add_response_method(method_name=:http_response, cache: [])
+        
         class_attribute :http_response_method
-        
-        self.http_response_method = method_name
-        
+
+        self.http_response_method  = method_name
+
+        (ActiveResourceResponse.http_response_caching ||= []).concat(cache)
+
         class << self
+
           alias :find_without_http_response :find
 
           def find(*arguments)
@@ -56,18 +62,17 @@ module ActiveResourceResponse
           undef :find
           alias :find :find_without_http_response
           undef :find_without_http_response
+
           undef :http_response_method
           undef :http_response_method=
         end
       end
 
       def wrap_result(result)
+
         result = SimpleDelegator.new(result) unless result.duplicable?
         result.instance_variable_set(:@http_response, connection.http_response)
-
-        result.singleton_class.send(:define_method, self.http_response_method) do
-          @http_response
-        end
+        result.singleton_class.send(:define_method, self.http_response_method) { @http_response }
         
         result
       end
