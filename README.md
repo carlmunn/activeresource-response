@@ -46,9 +46,11 @@ be multiple entries. There is debugging, look out for "[D]"
 I applied caching within *activeresource-response* because Rails.cache was giving
 me problems. You can't *Marshal.dump* objects with singleton methods which this gem does. This caches the raw JSON now
 
+`namespace` is optional, it adds to the cache key. Can be a Lambda which returns a string
+
 ```ruby
   add_response_method :http_response, cache: [
-    {regex: /\/path\.json$/, expires_in: 6.hours}
+    {regex: /\/path\.json$/, expires_in: 6.hours, namespace: 'namespace'}
   ]
 
 ```

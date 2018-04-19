@@ -42,7 +42,7 @@ module ActiveResourceResponse
         
         class_attribute :http_response_method
 
-        self.http_response_method  = method_name
+        self.http_response_method = method_name
 
         (ActiveResourceResponse.http_response_caching ||= []).concat(cache)
 

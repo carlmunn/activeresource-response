@@ -34,7 +34,7 @@ module ActiveResourceResponse
 
           if cache_option = _cache?(meth, path)
             
-            _cache_key = _gen_key(path)
+            _cache_key = _gen_key(path, namespace: cache_option[:namespace])
 
             _log("CACHE: Request found using #{cache_option[:regex]}. Using key '#{_cache_key}'")
 
@@ -97,12 +97,15 @@ module ActiveResourceResponse
           # Split the URI from the params, the URI is more human friendly to read
           # while params are hashed and truncated
           # Example: activeresource
-          def _gen_key(path)
+          # +namespace+ to be more specific, like country codes
+          def _gen_key(path, namespace: nil)
             _uri, _params = _split_path(path)
             _uri_modified = _uri.gsub(/\//, "_").gsub(/\./, "-")
             _param_hash   = _params && Digest::SHA256.hexdigest(_params)[0..6]
 
-            ['activeresource', _uri_modified, _param_hash].reject(&:blank?).join('-')
+            namespace = namespace.call if namespace.is_a?(Proc)
+
+            ['activeresource', namespace, _uri_modified, _param_hash].reject(&:blank?).join('-')
           end
 
           # Regex the path, ignore the query
